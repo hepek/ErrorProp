@@ -1,0 +1,4 @@
+ErrorProp
+=========
+
+Error propagation library.
