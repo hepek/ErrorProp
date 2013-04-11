@@ -47,11 +47,11 @@ cabal-version:       >=1.8
 
 library
   -- Modules exported by the library.
-  -- exposed-modules:     
-  
+  exposed-modules:     
+  Math.ErrorProp  
   -- Modules included in this library but not exported.
   -- other-modules:       
   
   -- Other library packages from which modules are imported.
-  build-depends:       base ==4.6.*
+  build-depends:       base ==4.6.*; hmatrix >= 0.14
   
