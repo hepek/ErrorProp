@@ -24,13 +24,13 @@ import Math.Symbolic
 type Mx  = Matrix Double
 type Vec = Vector Double
 
-
 -- | Measurementment represented by measured value and corresponding
 --  covariance matrix
 data Measurement = Measurement Vec Mx
               deriving (Eq)
 
-errorSize x s = error "Input Length mismatch"
+errorSize x s = error $ "Input length mismatch. length(x) = " ++ show (length x)
+                      ++ ", but length(s) or one of its components isn't"
 
 -- | Measurement smart constructor: constructs uncorrelated sample
 um :: [Double] -> [Double] -> Measurement
