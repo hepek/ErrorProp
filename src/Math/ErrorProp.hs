@@ -39,29 +39,29 @@ um x sigma | (length x /= length sigma) = errorSize x sigma
 
 -- | Measurement smart constructor: constructs correlated sample
 cm :: [Double] -> [[Double]] -> Measurement
-cm x sigmas | (or $ (map (\y -> length y /= length x) sigmas))
-                  || ((length sigmas) /= (length x)) =
+cm x sigmas | any (\y -> length y /= length x) sigmas
+                  || (length sigmas /= length x) =
                  errorSize x sigmas
             | otherwise = Measurement (fromList x) (fromLists sigmas)
 
 
 instance (Show Measurement) where
   show (Measurement x mSigma)
-    | (mSigma == mD) = showv x d
+    | mSigma == mD = showv x d
     | otherwise      = showm x mSigma
     where
        d  = takeDiag mSigma
        mD = diag d
 
        showv x sigmas = "x\tσ\n" ++
-             (unlines [ show x ++ "\t" ++ show s
+             unlines [ show x ++ "\t" ++ show s
                       | x <- toList x
-                      | s <- toList sigmas])
+                      | s <- toList sigmas]
        showm x sigmas = "x\tΣ\n" ++
-             (unlines [ show x ++ "\t" ++ (unwords.(intersperse "\t") $
-                        (map show line))
+             unlines [ show x ++ "\t" ++ (unwords . intersperse "\t" $
+                        map show line)
                       | x <- toList x
-                      | line <- toLists sigmas])
+                      | line <- toLists sigmas]
 
 
 -- | A type to represent linear transformation
@@ -96,9 +96,9 @@ jacobian :: [Fn] -> [[Fn]]
 jacobian fs = transpose [map d fs | d <- ds]
   where
     ds = [diff s | s <- xs']
-    xs' = takeWhile (\(Symbol x) -> x <= (maxDegreeX fs)) xs
+    xs' = takeWhile (\(Symbol x) -> x <= maxDegreeX fs) xs
 
-maxDegreeX fs = l.sort.(map (l.sort.hx)) $ fs
+maxDegreeX fs = l . sort . map (l.sort.hx) $ fs
   where
     l [] = "x1"
     l xs = last xs
@@ -122,8 +122,7 @@ operatingPoint (Nt fs fs') x t =
   (fromList  $ map (evalS env) fs,
    fromLists $ map (map (evalS env)) fs')
   where
-    env = (toEnv xs x) ++ (toEnv ts t)
-    toEnv symb val = zipWith (,) symb val
+    env = (zip xs x) ++ (zip ts t)
 
 -- | Performs non-linear transformation
 nonLinearT :: Nt -> [Double] -> Measurement -> Measurement

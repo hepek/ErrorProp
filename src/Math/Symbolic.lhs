@@ -1,5 +1,5 @@
+*** A Symbolic Haskel Experiment ***
 >module Math.Symbolic
->
 >        ( Expr(..)
 >        , x,y,z,a,b,c
 >        , simplify
