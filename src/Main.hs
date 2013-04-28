@@ -3,7 +3,7 @@ import System.Exit
 
 test1 =
   let
-    m = Uncorr (fromList [1,2,3]) (fromList [1,2,3])
+    m = uM [1,2,3] [1,2,3]
     nlt = nt [x1+x2,x2+x3,x3]
     llt = lt [[1,1,0],[0,1,1],[0,0,1]]
   in
