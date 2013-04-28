@@ -48,7 +48,7 @@ cm x sigmas | any (\y -> length y /= length x) sigmas
 instance (Show Measurement) where
   show (Measurement x mSigma)
     | mSigma == mD = showv x d
-    | otherwise      = showm x mSigma
+    | otherwise    = showm x mSigma
     where
        d  = takeDiag mSigma
        mD = diag d
