@@ -30,13 +30,19 @@ type Vec = Vector Double
 data Measurement = Measurement Vec Mx
               deriving (Eq)
 
+errorSize x s = error "Input Length mismatch"
+
 -- | Measurement smart constructor: constructs uncorrelated sample
 um :: [Double] -> [Double] -> Measurement
-um x sigma = Measurement (fromList x) $ diag (fromList sigma)
+um x sigma | (length x /= length sigma) = errorSize x sigma
+           | otherwise = Measurement (fromList x) $ diag (fromList sigma)
 
 -- | Measurement smart constructor: constructs correlated sample
 cm :: [Double] -> [[Double]] -> Measurement
-cm x sigmas = Measurement (fromList x) (fromLists sigmas)
+cm x sigmas | (or $ (map (\y -> length y /= length x) sigmas))
+                  || ((length sigmas) /= (length x)) =
+                 errorSize x sigmas
+            | otherwise = Measurement (fromList x) (fromLists sigmas)
 
 
 instance (Show Measurement) where
@@ -77,14 +83,17 @@ ts@[t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11] = map (Symbol.('t':).show) [1..11]
 type Fn = Expr Double
 
 -- | Represents non-linear transformations
---   A list of functions f(x,t)  as expressions of the following form:
---   e.g. [x1*x2, t1*sin(x1), ...]
 data Nt = Nt [Fn] [[Fn]]
   deriving (Show)
 
--- | Calculates laplacian
-laplacian :: [Fn] -> [[Fn]]
-laplacian fs = transpose [map d fs | d <- ds]
+-- | Smart constructor of nonlinear transformation
+--   e.g. nt [x1*x1, x2, sin(x3)]
+nt :: [Fn] -> Nt
+nt fs = Nt fs (jacobian fs)
+
+-- | Calculates Jacobian matrix
+jacobian :: [Fn] -> [[Fn]]
+jacobian fs = transpose [map d fs | d <- ds]
   where
     ds = [diff s | s <- xs']
     xs' = takeWhile (\(Symbol x) -> x <= (maxDegreeX fs)) xs
@@ -105,11 +114,6 @@ hx (Cos a)    = hx a
 hx (Rec a)    = hx a
 hx (Neg a)    = hx a
 hx (Atom _) = []
-
--- | Smart constructor of nonlinear transformation
---   e.g. nt [x1*x1, x2, sin(x3)]
-nt :: [Fn] -> Nt
-nt fs = Nt fs (laplacian fs)
 
 -- | evaluate non-linear transformation at operation point
 --   represented by vector t and a measurement
