@@ -7,7 +7,7 @@ module Math.ErrorProp
         , um, cm
         , lt, nt
         , x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11
-        , linearT, nonLinearT
+        , transform
        )
        where
 
@@ -22,6 +22,12 @@ import Math.Symbolic
 
 type Mx  = Matrix Double
 type Vec = Vector Double
+
+type Fn = Expr Double
+
+data Transf = Lt Mx            -- ^ linear transformations
+            | Nt [Fn] [[Fn]]   -- ^ non linear transformaton
+            deriving (Show)
 
 -- | Measurementment represented by measured value and corresponding
 --  covariance matrix
@@ -63,31 +69,17 @@ instance (Show Measurement) where
                       | line <- toLists sigmas]
 
 
--- | A type to represent linear transformation
-type Lt = Mx
-
 -- | Smart constructor for linear transformation
-lt :: [[Double]] -> Lt
-lt = fromLists
-
--- | performs linear transformation on the sample
-linearT :: Lt -> Measurement -> Measurement
-linearT mA (Measurement x mS) = Measurement (mA <> x) (mA <> mS <> trans mA)
-
+lt :: [[Double]] -> Transf
+lt = Lt . fromLists
 
 -- | predefined symbolic values to be used in defining expression
 xs@[x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11] = map (Symbol.('x':).show) [1..11]
 ts@[t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11] = map (Symbol.('t':).show) [1..11]
 
-type Fn = Expr Double
-
--- | Represents non-linear transformations
-data Nt = Nt [Fn] [[Fn]]
-  deriving (Show)
-
 -- | Smart constructor of nonlinear transformation
 --   e.g. nt [x1*x1, x2, sin(x3)]
-nt :: [Fn] -> Nt
+nt :: [Fn] -> Transf
 nt fs = Nt fs (jacobian fs)
 
 -- | Calculates Jacobian matrix
@@ -116,15 +108,15 @@ hx (Atom _) = []
 
 -- | evaluate non-linear transformation at operation point
 --   represented by vector t and a measurement
-operatingPoint :: Nt -> [Double] -> (Vec, Mx)
-operatingPoint (Nt fs fs') x =
+operatingPoint :: Transf -> [Double] -> (Vec, Mx)
+operatingPoint   (Nt fs fs') x =
   (fromList  $ map (evalS env) fs,
    fromLists $ map (map (evalS env)) fs')
   where
     env = zip xs x
 
--- | Performs non-linear transformation
-nonLinearT :: Nt -> Measurement -> Measurement
-nonLinearT nlt (Measurement x s) =
-   Measurement f (mL <> s <> trans mL)
+transform :: Transf -> Measurement -> Measurement
+transform (Lt mA)      (Measurement x mS) = Measurement (mA <> x) (mA <> mS <> trans mA)
+transform nlt@(Nt _ _) (Measurement x mS) = Measurement f (mL <> mS <> trans mL)
      where (f,mL) = operatingPoint nlt (toList x)
+
