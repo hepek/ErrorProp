@@ -4,6 +4,7 @@
 --   linear and non-linear systems
 module Math.ErrorProp
        (Measurement
+        , Fn
         , um, cm
         , lt, nt
         , x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11
@@ -38,14 +39,18 @@ errorSize x s = error $ "Input length mismatch. length(x) = " ++ show (length x)
                       ++ ", but length(s) or one of its components isn't"
 
 -- | Measurement smart constructor: constructs uncorrelated sample
-um :: [Double] -> [Double] -> Measurement
+um :: [Double]   -- ^ measurement
+   -> [Double]   -- ^ variance
+   -> Measurement
 um x sigma | (length x /= length sigma) = errorSize x sigma
            | otherwise = Measurement (fromList x) $ diag (fromList sigma)
 
 -- | Measurement smart constructor: constructs correlated sample
-cm :: [Double] -> [[Double]] -> Measurement
+cm :: [Double]   -- ^ measurement
+   -> [[Double]] -- ^ covariance matrix
+   -> Measurement
 cm x sigmas | any (\y -> length y /= length x) sigmas
-                  || (length sigmas /= length x) =
+              || (length sigmas /= length x) =
                  errorSize x sigmas
             | otherwise = Measurement (fromList x) (fromLists sigmas)
 
@@ -70,7 +75,8 @@ instance (Show Measurement) where
 
 
 -- | Smart constructor for linear transformation
-lt :: [[Double]] -> Transf
+lt :: [[Double]] -- ^ A matrix representing linear transformation
+   -> Transf
 lt = Lt . fromLists
 
 -- | predefined symbolic values to be used in defining expression
@@ -79,7 +85,8 @@ ts@[t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11] = map (Symbol.('t':).show) [1..11]
 
 -- | Smart constructor of nonlinear transformation
 --   e.g. nt [x1*x1, x2, sin(x3)]
-nt :: [Fn] -> Transf
+nt :: [Fn]       -- ^ A list of functions, one for each output parameter
+   -> Transf
 nt fs = Nt fs (jacobian fs)
 
 -- | Calculates Jacobian matrix
@@ -119,4 +126,3 @@ transform :: Transf -> Measurement -> Measurement
 transform (Lt mA)      (Measurement x mS) = Measurement (mA <> x) (mA <> mS <> trans mA)
 transform nlt@(Nt _ _) (Measurement x mS) = Measurement f (mL <> mS <> trans mL)
      where (f,mL) = operatingPoint nlt (toList x)
-
