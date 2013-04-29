@@ -7,7 +7,6 @@ module Math.ErrorProp
         , um, cm
         , lt, nt
         , x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11
-        , t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11
         , linearT, nonLinearT
        )
        where
@@ -117,15 +116,15 @@ hx (Atom _) = []
 
 -- | evaluate non-linear transformation at operation point
 --   represented by vector t and a measurement
-operatingPoint :: Nt -> [Double] -> [Double] -> (Vec, Mx)
-operatingPoint (Nt fs fs') x t =
+operatingPoint :: Nt -> [Double] -> (Vec, Mx)
+operatingPoint (Nt fs fs') x =
   (fromList  $ map (evalS env) fs,
    fromLists $ map (map (evalS env)) fs')
   where
-    env = (zip xs x) ++ (zip ts t)
+    env = zip xs x
 
 -- | Performs non-linear transformation
-nonLinearT :: Nt -> [Double] -> Measurement -> Measurement
-nonLinearT nlt t (Measurement x s) =
+nonLinearT :: Nt -> Measurement -> Measurement
+nonLinearT nlt (Measurement x s) =
    Measurement f (mL <> s <> trans mL)
-     where (f,mL) = operatingPoint nlt (toList x) t
+     where (f,mL) = operatingPoint nlt (toList x)
