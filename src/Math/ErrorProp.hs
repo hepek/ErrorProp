@@ -80,8 +80,8 @@ lt :: [[Double]] -- ^ A matrix representing linear transformation
 lt = Lt . fromLists
 
 -- | predefined symbolic values to be used in defining expression
-xs@[x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11] = map (Symbol.('x':).show) [1..11]
-ts@[t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11] = map (Symbol.('t':).show) [1..11]
+xs@[x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11] =
+  map (Symbol.('x':).show) [1..11] :: [Fn]
 
 -- | Smart constructor of nonlinear transformation
 --   e.g. nt [x1*x1, x2, sin(x3)]
