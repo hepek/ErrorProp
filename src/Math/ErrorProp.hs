@@ -86,7 +86,7 @@ nt fs = Nt fs (jacobian fs)
 jacobian :: [Fn] -> [[Fn]]
 jacobian fs = transpose [map d fs | d <- ds]
   where
-    ds = [diff s | s <- xs']
+    ds = [ simplify.(diff s) | s <- xs']
     xs' = takeWhile (\(Symbol x) -> x <= maxDegreeX fs) xs
 
 maxDegreeX fs = l . sort . map (l.sort.hx) $ fs
