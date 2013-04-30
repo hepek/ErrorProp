@@ -63,12 +63,12 @@ instance (Show Measurement) where
        d  = takeDiag mSigma
        mD = diag d
 
-       showv x sigmas = "x\tσ\n" ++
-             unlines [ show x ++ "\t" ++ show s
+       showv x sigmas = "x\t\tvar\n" ++
+             unlines [ show x ++ "\t\t" ++ show s
                       | x <- toList x
                       | s <- toList sigmas]
-       showm x sigmas = "x\tΣ\n" ++
-             unlines [ show x ++ "\t" ++ (unwords . intersperse "\t" $
+       showm x sigmas = "x\t\tCov\n" ++
+             unlines [ show x ++ "\t\t" ++ (unwords . intersperse "\t" $
                         map show line)
                       | x <- toList x
                       | line <- toLists sigmas]
