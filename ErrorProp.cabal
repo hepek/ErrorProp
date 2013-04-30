@@ -26,5 +26,5 @@ cabal-version:       >=1.8
 library
   exposed-modules:   Math.ErrorProp
   other-modules:     Math.Symbolic  
-  build-depends:     base == 3.0, split >= 0.2
+  build-depends:     base >= 3.0, split >= 0.2
   hs-source-dirs:    src
