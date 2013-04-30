@@ -6,7 +6,7 @@ name:                ErrorProp
 -- PVP summary:      +-+------- breaking API changes
 --                   | | +----- non-breaking API additions
 --                   | | | +--- code changes with no API change
-version:             0.2.0.0
+version:             0.3.0.0
 
 -- A short (one-line) description of the package.
 synopsis:            Error propagation library.
@@ -14,7 +14,7 @@ synopsis:            Error propagation library.
 homepage:            github.com/hepek/ErrorProp
 license:             GPL-2
 license-file:        LICENSE
-author:              Milan Marković
+author:              Milan Markovic
 maintainer:          zivotinja@gmail.com
 
 category:            Math
@@ -26,5 +26,5 @@ cabal-version:       >=1.8
 library
   exposed-modules:   Math.ErrorProp
   other-modules:     Math.Symbolic  
-  build-depends:     base ==4.6.*, hmatrix >= 0.14
+  build-depends:     base == 4.6.*, split >= 0.2
   hs-source-dirs:    src

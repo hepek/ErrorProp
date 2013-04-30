@@ -3,26 +3,24 @@
 -- | Module 'ErrorProp' is used to calculate error propagation in
 --   linear and non-linear systems
 module Math.ErrorProp
-       (Measurement
+{-       (Measurement
         , Fn
         , um, cm
         , lt, nt
         , x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11
         , transform
-       )
+        , diag, trans, (>.), (><)
+       ) -}
        where
 
-import Data.Packed.Matrix
-import Data.Packed.Vector
-import Numeric.LinearAlgebra
 import Data.List
-
+import Data.List.Split
 import Control.Applicative
 
 import Math.Symbolic
 
-type Mx  = Matrix Double
-type Vec = Vector Double
+type Mx  = [[Double]]
+type Vec = [Double]
 
 type Fn = Expr Double
 
@@ -35,6 +33,29 @@ data Transf = Lt Mx            -- ^ linear transformations
 data Measurement = Measurement Vec Mx
               deriving (Eq)
 
+-- | Matrix vector multiplication
+(>.) :: (Num a) => [[a]] -> [a] -> [a]
+mA >. x  = map (muladd x) (mA)
+   where
+     muladd x y = sum (zipWith (*) x y)
+
+-- | Matrix multiplication
+(><) :: (Num a) => [[a]] -> [[a]] -> [[a]]
+mA >< mB = transpose [ mA >. col | col <- transpose mB ]
+
+
+takeDiag :: [[a]] -> [a]
+takeDiag m = [ m !! (i-1) !! (i-1) | i <- [1 .. length m]]
+
+diag :: (Num a) => [a] -> [[a]]
+diag d = chunksOf n $ intercalate zeros $ transpose [d]
+  where
+    zeros = replicate n 0
+    n     = length d
+
+trans :: [[a]] -> [[a]]
+trans  = transpose
+
 errorSize x s = error $ "Input length mismatch. length(x) = " ++ show (length x)
                       ++ ", but length(s) or one of its components isn't"
 
@@ -43,7 +64,7 @@ um :: [Double]   -- ^ measurement
    -> [Double]   -- ^ variance
    -> Measurement
 um x sigma | (length x /= length sigma) = errorSize x sigma
-           | otherwise = Measurement (fromList x) $ diag (fromList sigma)
+           | otherwise = Measurement x $ diag sigma
 
 -- | Measurement smart constructor: constructs correlated sample
 cm :: [Double]   -- ^ measurement
@@ -52,7 +73,7 @@ cm :: [Double]   -- ^ measurement
 cm x sigmas | any (\y -> length y /= length x) sigmas
               || (length sigmas /= length x) =
                  errorSize x sigmas
-            | otherwise = Measurement (fromList x) (fromLists sigmas)
+            | otherwise = Measurement x sigmas
 
 
 instance (Show Measurement) where
@@ -63,21 +84,21 @@ instance (Show Measurement) where
        d  = takeDiag mSigma
        mD = diag d
 
-       showv x sigmas = "x\t\tvar\n" ++
+       showv xs sigmas = "x\t\tvar\n" ++
              unlines [ show x ++ "\t\t" ++ show s
-                      | x <- toList x
-                      | s <- toList sigmas]
-       showm x sigmas = "x\t\tCov\n" ++
+                      | x <- xs
+                      | s <- sigmas]
+       showm xs sigmas = "x\t\tCov\n" ++
              unlines [ show x ++ "\t\t" ++ (unwords . intersperse "\t" $
                         map show line)
-                      | x <- toList x
-                      | line <- toLists sigmas]
+                      | x <- xs
+                      | line <- sigmas]
 
 
 -- | Smart constructor for linear transformation
 lt :: [[Double]] -- ^ A matrix representing linear transformation
    -> Transf
-lt = Lt . fromLists
+lt = Lt
 
 -- | predefined symbolic values to be used in defining expression
 xs@[x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11] =
@@ -117,12 +138,12 @@ hx (Atom _) = []
 --   represented by vector t and a measurement
 operatingPoint :: Transf -> [Double] -> (Vec, Mx)
 operatingPoint   (Nt fs fs') x =
-  (fromList  $ map (evalS env) fs,
-   fromLists $ map (map (evalS env)) fs')
+  (map (evalS env) fs,
+   map (map (evalS env)) fs')
   where
     env = zip xs x
 
 transform :: Transf -> Measurement -> Measurement
-transform (Lt mA)      (Measurement x mS) = Measurement (mA <> x) (mA <> mS <> trans mA)
-transform nlt@(Nt _ _) (Measurement x mS) = Measurement f (mL <> mS <> trans mL)
-     where (f,mL) = operatingPoint nlt (toList x)
+transform (Lt mA)      (Measurement x mS) = Measurement (mA >. x) (mA >< mS >< trans mA)
+transform nlt@(Nt _ _) (Measurement x mS) = Measurement f (mL >< mS >< trans mL)
+     where (f,mL) = operatingPoint nlt x
