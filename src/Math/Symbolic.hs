@@ -3,8 +3,7 @@ module Math.Symbolic
         , x,y,z,a,b,c
         , simplify
         , diff
-        , eval, eval'
-        , jacobian, variablesOf)
+        , eval, eval')
         where
 
 import Prelude hiding (lookup)
@@ -140,15 +139,15 @@ eval env (Log a)    = log (eval env a)
 --   Symbol -> value
 eval' :: (Floating a, Eq a, Show a) => [(Expr a, a)] -> Expr a -> a
 eval' _ (Atom a)     = a
-eval' env (Sum a b)  = evalS env a + evalS env b
-eval' env (Prod a b) = evalS env a * evalS env b
-eval' env (Neg a)    = -(evalS env a)
-eval' env (Rec a)    = recip (evalS env a)
+eval' env (Sum a b)  = eval' env a + eval' env b
+eval' env (Prod a b) = eval' env a * eval' env b
+eval' env (Neg a)    = -(eval' env a)
+eval' env (Rec a)    = recip (eval' env a)
 eval' env s@(Symbol _) = fromMaybe (error ("No "++ show s ++" in env"))
                                    (lookup s env)
-eval' env (Exp E b)  = exp (evalS env b)
+eval' env (Exp E b)  = exp (eval' env b)
 eval' env (E)        = exp 1
-eval' env (Exp a b)  = evalS env a ** evalS env b
-eval' env (Sin a)    = sin (evalS env a)
-eval' env (Cos a)    = cos (evalS env a)
-eval' env (Log a)    = log (evalS env a)
+eval' env (Exp a b)  = eval' env a ** eval' env b
+eval' env (Sin a)    = sin (eval' env a)
+eval' env (Cos a)    = cos (eval' env a)
+eval' env (Log a)    = log (eval' env a)
