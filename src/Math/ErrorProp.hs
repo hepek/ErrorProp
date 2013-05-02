@@ -6,11 +6,15 @@ module Math.ErrorProp
         , Fn
         , um, cm
         , lt, nt
+        , variablesOf
         , x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11
         , transform
         , diag, takeDiag, trans, (>.), (><)
        )
        where
+
+--TODO:
+-- Create LinearAlgebra module
 
 import Data.List
 import Data.List.Split
@@ -111,12 +115,12 @@ ts@[t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11] =
 nt :: [Fn]       -- ^ A list of functions, one for each output parameter
    -> Transf
 nt fs = Nt fs (jacobian fs)
-
 -- | Calculates Jacobian matrix
+
 jacobian :: [Fn] -> [[Fn]]
 jacobian fs = transpose [map d fs | d <- ds]
   where
-    ds = [ simplify.(diff s) | s <- xs']
+    ds = [ diff s | s <- xs']
     xs' = variablesOf fs
 
 -- | extracts variables from a list of expressions
@@ -140,13 +144,11 @@ variablesOf fs =
     cmpSymbol (Symbol s1) (Symbol s2) = compare s1 s2
     cmpSymbol _ _ = error "Attempt to compare non-symbol."
 
-
 -- | evaluate non-linear transformation at operation point
---   represented by vector t and a measurement
 operatingPoint :: Transf -> [Double] -> (Vec, Mx)
 operatingPoint   (Nt fs fs') x =
-  (map (evalS env) fs,
-   map (map (evalS env)) fs')
+  (map (eval' env) fs,
+   map (map (eval' env)) fs')
   where
     env = zip xs x
 
