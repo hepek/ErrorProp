@@ -6,19 +6,19 @@ Error propagation library.
 ```haskell
 import Math.ErrorProp
 
-α = Symbol "α"
-β = Symbol "β"
-γ = Symbol "γ"
+α = var "α"
+β = var "β"
+γ = var "γ"
+x = var "x"
+y = var "y"
 
-mRz = [[cos(α), -sin(α), 0]
+rot = [[cos(α), -sin(α), 0]
       ,[sin(α),  cos(α), 0]
       ,[0,       0,      1]]
 
-mRy = [[cos(β),  0,      sin(β)]
-      ,[0,       1,      0]
-      ,[-sin(β), 0,      cos(β)]]
+trans = [[1, 0, x]
+        ,[0, 1, y]
+        ,[0, 0, 1]]
 
-mRx = [[1,       0,      0]
-      ,[0,       cos(γ), -sin(γ)]
-      ,[0,       sin(γ), cos(γ)]]
+
 ```
