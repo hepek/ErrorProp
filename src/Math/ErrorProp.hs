@@ -27,34 +27,19 @@ type Vec = [Double]
 
 data Transf = Lt Mx            -- ^ linear transformations
             | Nt [Fn] [[Fn]]   -- ^ non linear transformaton
-            deriving (Show)
 
 -- | Measurementment represented by measured value and corresponding
 --  covariance matrix
 data Measurement = Measurement Vec Mx
               deriving (Eq)
 
-var :: String -> Fn
-var = Symbol
-
-errorSize x s = error $  "Input length mismatch. length(x) = " ++ show (length x)
-                      ++ ", but length(s) or one of its components isn't"
-
--- | Measurement smart constructor: constructs uncorrelated sample
-um :: [Double]   -- ^ measurement
-   -> [Double]   -- ^ variance
-   -> Measurement
-um x sigma | (length x /= length sigma) = errorSize x sigma
-           | otherwise = Measurement x $ diag sigma
-
--- | Measurement smart constructor: constructs correlated sample
-cm :: [Double]   -- ^ measurement
-   -> [[Double]] -- ^ covariance matrix
-   -> Measurement
-cm x sigmas | any (\y -> length y /= length x) sigmas
-              || (length sigmas /= length x) =
-                 errorSize x sigmas
-            | otherwise = Measurement x sigmas
+instance (Show Transf) where
+  show (Lt m)    = intercalate "\n" (map show m)
+  show (Nt fs _) = intercalate "\n" $ zipWith (\a b -> a ++ " = " ++ b)
+                                               (map show ys) 
+                                               (map show fs)
+    where
+      ys = map (Symbol.('o':).show) [1..] :: [Fn]
 
 
 instance (Show Measurement) where
@@ -76,6 +61,26 @@ instance (Show Measurement) where
                       | line <- sigmas]
 
 
+errorSize x s = error $  "Input length mismatch. length(x) = " ++ show (length x)
+                      ++ ", but length(s) or one of its components isn't"
+
+-- | Measurement smart constructor: constructs uncorrelated sample
+um :: [Double]   -- ^ measurement
+   -> [Double]   -- ^ variance
+   -> Measurement
+um x sigma | (length x /= length sigma) = errorSize x sigma
+           | otherwise = Measurement x $ diag sigma
+
+-- | Measurement smart constructor: constructs correlated sample
+cm :: [Double]   -- ^ measurement
+   -> [[Double]] -- ^ covariance matrix
+   -> Measurement
+cm x sigmas | any (\y -> length y /= length x) sigmas
+              || (length sigmas /= length x) =
+                 errorSize x sigmas
+            | otherwise = Measurement x sigmas
+
+
 -- | Smart constructor for linear transformation
 lint :: [[Double]] -- ^ A matrix representing linear transformation
    -> Transf
@@ -92,6 +97,9 @@ nlt :: [Fn]       -- ^ A list of functions, one for each output parameter
 nlt fs = Nt fs1 (jacobian fs1)
   where
      fs1 = map simplify fs
+
+var :: String -> Fn
+var = Symbol
 
 -- | Calculates Jacobian matrix
 jacobian :: [Fn] -> [[Fn]]
