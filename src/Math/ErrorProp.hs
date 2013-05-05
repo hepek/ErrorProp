@@ -5,12 +5,12 @@ module Math.ErrorProp
        (Measurement
         , Fn
         , um, cm
-        , lt, nt
-        , variablesOf
+        , lint, nlt, variables
         , var
         , x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11
         , transform
         , diag, takeDiag, trans, (>.), (><)
+        , simplify
        )
        where
 
@@ -77,9 +77,9 @@ instance (Show Measurement) where
 
 
 -- | Smart constructor for linear transformation
-lt :: [[Double]] -- ^ A matrix representing linear transformation
+lint :: [[Double]] -- ^ A matrix representing linear transformation
    -> Transf
-lt = Lt
+lint = Lt
 
 -- | predefined symbolic values to be used in defining expression
 xs@[x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11] =
@@ -87,20 +87,26 @@ xs@[x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11] =
 
 -- | Smart constructor of nonlinear transformation
 --   e.g. nt [x1*x1, x2, sin(x3)]
-nt :: [Fn]       -- ^ A list of functions, one for each output parameter
+nlt :: [Fn]       -- ^ A list of functions, one for each output parameter
    -> Transf
-nt fs = Nt fs (jacobian fs)
--- | Calculates Jacobian matrix
+nlt fs = Nt fs1 (jacobian fs1)
+  where
+     fs1 = map simplify fs
 
+-- | Calculates Jacobian matrix
 jacobian :: [Fn] -> [[Fn]]
 jacobian fs = transpose [map d fs | d <- ds]
   where
     ds = [ diff s | s <- xs']
     xs' = variablesOf fs
 
--- | extracts variables from a list of expressions
+variables :: Transf -> [Fn]
+variables (Lt _) = []
+variables (Nt fs _) = variablesOf fs
+
+-- | extracts unbound variables from a nonlinear transformation
 variablesOf :: [Fn] -> [Fn]
-variablesOf fs =  
+variablesOf fs =
     (nubBy$ \a b -> cmpSymbol a b == EQ) .
     sortBy cmpSymbol .
     concatMap ex $ fs
@@ -119,15 +125,15 @@ variablesOf fs =
     cmpSymbol (Symbol s1) (Symbol s2) = compare s1 s2
     cmpSymbol _ _ = error "Attempt to compare non-symbol."
 
+
+
 -- | evaluate non-linear transformation at operation point
-operatingPoint :: Transf -> [Double] -> (Vec, Mx)
-operatingPoint   (Nt fs fs') x =
+operatingPoint :: Transf -> [(Fn, Double)] -> (Vec, Mx)
+operatingPoint   (Nt fs fs') env =
   (map (eval' env) fs,
    map (map (eval' env)) fs')
-  where
-    env = zip (variablesOf fs) x
 
 transform :: Transf -> Measurement -> Measurement
 transform (Lt mA)      (Measurement x mS) = Measurement (mA >. x) (mA >< mS >< trans mA)
-transform nlt@(Nt _ _) (Measurement x mS) = Measurement f (mL >< mS >< trans mL)
-     where (f,mL) = operatingPoint nlt x
+transform nlt@(Nt fs _) (Measurement x mS) = Measurement f (mL >< mS >< trans mL)
+  where (f,mL) = operatingPoint nlt (zip (variablesOf fs) x)
