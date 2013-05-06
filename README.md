@@ -78,7 +78,7 @@ At 45 degrees:
 
 ```haskell
 print $ transform armT1 $ 
-    um [degrad 45, degrad 0, 10, 5, 0, 0] [degrad 1, degrad 1, 0.01, 0.01, 0, 0]
+   um [degrad 45, degrad 0, 10, 5, 0, 0] [degrad 1, degrad 1, 0.01, 0.01, 0, 0]
 ```
 ```
 x              Cov
@@ -88,8 +88,8 @@ x              Cov
 ```
 
 ```haskell
-   print $ transform armT1 $ 
-      um [degrad 0, degrad 0, 10, 5, 0, 0] [degrad 1, degrad 1, 0.01, 0.01, 0, 0]
+print $ transform armT1 $ 
+   um [degrad 0, degrad 0, 10, 5, 0, 0] [degrad 1, degrad 1, 0.01, 0.01, 0, 0]
 ```
 ```
 x              var
@@ -100,7 +100,7 @@ x              var
 
 ```haskell
 print $ transform armT1 $ 
-    um [degrad (-90), degrad 0, 10, 5, 0, 0] [degrad 1, degrad 1, 0.01, 0.01, 0, 0]
+   um [degrad (-90), degrad 0, 10, 5, 0, 0] [degrad 1, degrad 1, 0.01, 0.01, 0, 0]
 ```
 ```
 x              Cov
