@@ -9,6 +9,8 @@ Let's simulate a non-linear transformation by combining translations
 and rotations of a robotic arm and evaluating error propagation at different
 operation points.
 
+![Illustration](images/two-link-planar-arm.png "Figure 1.")
+
 ```haskell
 import Math.ErrorProp
 
