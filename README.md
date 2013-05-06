@@ -51,11 +51,20 @@ armT1 = nlt (arm1 >. [x, y, 1])
 We can view our set of resulting functions:
 
 ```haskell
->print armT1
+print armT1
+```
+```
 o1 = (((x * ((cos(a2) * cos(a1)) + (sin(a2) * -sin(a1)))) + (y * ((-sin(a2) * cos(a1)) + (cos(a2) * -sin(a1))))) + ((l2 * ((-sin(a2) * cos(a1)) + (cos(a2) * -sin(a1)))) + (l1 * -sin(a1))))
 o2 = (((x * ((cos(a2) * sin(a1)) + (sin(a2) * cos(a1)))) + (y * ((-sin(a2) * sin(a1)) + (cos(a2) * cos(a1))))) + ((l2 * ((-sin(a2) * sin(a1)) + (cos(a2) * cos(a1)))) + (l1 * cos(a1))))
 o3 = 1.0
 
+```
+And order of input parameters.
+```haskell
+print (variables armT1)
+```
+```
+[a1,a2,l1,l2,x,y]
 ```
 
 Now let's evaluate how uncertainties propagate through our model in different operating points
