@@ -104,8 +104,8 @@ nlt fs = Nt fs1 (jacobian fs1)
 defVar :: String -> Fn
 defVar = var
 
---partial (Lt _) _ = error "not Nt"
---partial (Nt fs fs') env = Nt (map (partEval env) fs) (map (map (partEval env) fs'))
+partial (Lt _) _ = error "not Nt"
+partial (Nt fs fs') env = Nt (map (partEval env) fs) (map (map (partEval env)) fs')
 
 -- | Calculates Jacobian matrix
 jacobian :: [Fn] -> [[Fn]]
