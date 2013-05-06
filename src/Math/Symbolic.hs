@@ -1,14 +1,15 @@
 module Math.Symbolic
         ( Expr(..)
-        , x,y,z,a,b,c
         , simplify
         , diff
-        , eval, eval')
+        , eval, partEval
+        , var, variablesOf)
         where
 
 import Prelude hiding (lookup)
 import Data.Maybe
 import Data.List -- todo: change to Map
+import Data.Function
 
 data Expr a = Atom a
             | Sum  (Expr a) (Expr a)
@@ -69,16 +70,18 @@ instance (Show a) => Show (Expr a) where
   show (Exp a b)  = "(" ++ show a ++ "**" ++ show b ++ ")"
   show (E)        = "e"
 
-x = Symbol "x"
-y = Symbol "y"
-z = Symbol "z"
-a = Symbol "a"
-b = Symbol "b"
-c = Symbol "c"
+var = Symbol
 
-s :: (Fractional a, Eq a) => Expr a -> Expr a
+s :: (Fractional a, Floating a, Eq a) => Expr a -> Expr a
 s (Sum (Atom a) (Atom b))  = Atom (a+b)
 s (Prod (Atom a) (Atom b)) = Atom (a*b)
+s (Neg (Atom a))    = Atom (-a)
+s (Rec (Atom a))    = Atom (1/a)
+s (Sin (Atom a))    = Atom (sin a)
+s (Cos (Atom a))    = Atom (cos a)
+s (Log (Atom a))    = Atom (log a)
+s (Exp E (Atom b))  = Atom (exp b)
+s (Exp (Atom a) (Atom b)) = Atom (a ** b)
 s (Sum (Atom 0) a)  = s a
 s (Sum a (Atom 0))  = s a
 s (Prod (Atom 0) a) = Atom 0
@@ -121,33 +124,46 @@ diff (Symbol x) a = simplify $ d x a
 diff _ _ = error "First argument must be a symbol"
 
 
-eval :: (Floating a) => [(String,a)] -> Expr a -> a
-eval _ (Atom a)     = a
-eval env (Sum a b)  = eval env a + eval env b
-eval env (Prod a b) = eval env a * eval env b
-eval env (Neg a)    = -(eval env a)
-eval env (Rec a)    = recip (eval env a)
-eval env (Symbol a) = fromMaybe (error ("No "++ a ++" in env")) (lookup a env)
-eval env (Exp E b)  = exp (eval env b)
-eval env (E)        = exp 1
-eval env (Exp a b)  = eval env a ** eval env b
-eval env (Sin a)    = sin (eval env a)
-eval env (Cos a)    = cos (eval env a)
-eval env (Log a)    = log (eval env a)
+-- | Performs partial evaluation
+partEval :: (Floating a, Eq a, Show a) => [(Expr a, a)] -> Expr a -> Expr a
+partEval _ (Atom a)     = Atom a
+partEval env (Sum a b)  = s $ (partEval env a) + (partEval env b)
+partEval env (Prod a b) = s $ (partEval env a) * (partEval env b)
+partEval env (Neg a)    = s $ -(partEval env a)
+partEval env (Rec a)    = s $ recip (partEval env a)
+partEval env s@(Symbol _) = case lookup s env of
+                              Just a -> Atom a
+                              Nothing -> s   
+partEval env (Exp E b)  = s $ exp (partEval env b)
+partEval env (E)        = s $ exp 1
+partEval env (Exp a b)  = s $ partEval env a ** partEval env b
+partEval env (Sin a)    = s $ sin (partEval env a)
+partEval env (Cos a)    = s $ cos (partEval env a)
+partEval env (Log a)    = s $ log (partEval env a)
+
+variablesOf :: (Expr a) -> [Expr a]
+variablesOf expr =
+    nubBy  ((==) `on` getSym) $
+    sortBy (compare `on` getSym) $
+    ex expr
+  where
+    ex (Symbol s) = [Symbol s]
+    ex (Sum a b)  = (ex a) ++ (ex b)
+    ex (Prod a b) = (ex a) ++ (ex b)
+    ex (Exp a b)  = (ex a) ++ (ex b)
+    ex (Log a)    = ex a
+    ex (Sin a)    = ex a
+    ex (Cos a)    = ex a
+    ex (Rec a)    = ex a
+    ex (Neg a)    = ex a
+    ex (Atom _)   = []
+
+    getSym (Symbol a) = a
+    getSym _  = error "not a symbol"
 
 -- | Evaluates an expression with an environment defined by mapping from
 --   Symbol -> value
-eval' :: (Floating a, Eq a, Show a) => [(Expr a, a)] -> Expr a -> a
-eval' _ (Atom a)     = a
-eval' env (Sum a b)  = eval' env a + eval' env b
-eval' env (Prod a b) = eval' env a * eval' env b
-eval' env (Neg a)    = -(eval' env a)
-eval' env (Rec a)    = recip (eval' env a)
-eval' env s@(Symbol _) = fromMaybe (error ("No "++ show s ++" in env"))
-                                   (lookup s env)
-eval' env (Exp E b)  = exp (eval' env b)
-eval' env (E)        = exp 1
-eval' env (Exp a b)  = eval' env a ** eval' env b
-eval' env (Sin a)    = sin (eval' env a)
-eval' env (Cos a)    = cos (eval' env a)
-eval' env (Log a)    = log (eval' env a)
+eval env expr  = extract $ simplify $ partEval env expr
+  where
+    extract (Atom a) = a
+    extract other = error $ "unbound variables in final expr: "  ++ show other

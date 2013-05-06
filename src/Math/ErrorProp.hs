@@ -5,8 +5,9 @@ module Math.ErrorProp
        (Measurement
         , Fn
         , um, cm
-        , lint, nlt, variables
-        , var
+        , lint, nlt
+        , variables, uniqSym
+        , defVar
         , x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11
         , transform
         , diag, takeDiag, trans, (>.), (><)
@@ -16,6 +17,8 @@ module Math.ErrorProp
 
 import Control.Applicative
 import Data.List
+import Data.Function
+
 import Math.Symbolic
 import Math.SimpleMx
 
@@ -98,50 +101,39 @@ nlt fs = Nt fs1 (jacobian fs1)
   where
      fs1 = map simplify fs
 
-var :: String -> Fn
-var = Symbol
+defVar :: String -> Fn
+defVar = var
+
+--partial (Lt _) _ = error "not Nt"
+--partial (Nt fs fs') env = Nt (map (partEval env) fs) (map (map (partEval env) fs'))
 
 -- | Calculates Jacobian matrix
 jacobian :: [Fn] -> [[Fn]]
 jacobian fs = transpose [map d fs | d <- ds]
   where
     ds = [ diff s | s <- xs']
-    xs' = variablesOf fs
+    xs' = uniqSym $ concatMap variablesOf fs
 
 variables :: Transf -> [Fn]
 variables (Lt _) = []
-variables (Nt fs _) = variablesOf fs
+variables (Nt fs _) = uniqSym $
+    concatMap variablesOf fs
 
--- | extracts unbound variables from a nonlinear transformation
-variablesOf :: [Fn] -> [Fn]
-variablesOf fs =
-    (nubBy$ \a b -> cmpSymbol a b == EQ) .
-    sortBy cmpSymbol .
-    concatMap ex $ fs
+uniqSym :: (Eq a, Ord a) => [Expr a] -> [Expr a]
+uniqSym fs =
+    nubBy ((==)     `on` getSym) $
+    sortBy (compare `on` getSym) $ fs
   where
-    ex (Symbol s) = [Symbol s]
-    ex (Sum a b)  = (ex a) ++ (ex b)
-    ex (Prod a b) = (ex a) ++ (ex b)
-    ex (Exp a b)  = (ex a) ++ (ex b)
-    ex (Log a)    = ex a
-    ex (Sin a)    = ex a
-    ex (Cos a)    = ex a
-    ex (Rec a)    = ex a
-    ex (Neg a)    = ex a
-    ex (Atom _)   = []
-
-    cmpSymbol (Symbol s1) (Symbol s2) = compare s1 s2
-    cmpSymbol _ _ = error "Attempt to compare non-symbol."
-
-
+    getSym (Symbol a) = a
+    getSym _  = error "not a symbol"
 
 -- | evaluate non-linear transformation at operation point
 operatingPoint :: Transf -> [(Fn, Double)] -> (Vec, Mx)
 operatingPoint   (Nt fs fs') env =
-  (map (eval' env) fs,
-   map (map (eval' env)) fs')
+  (map (eval env) fs,
+   map (map (eval env)) fs')
 
 transform :: Transf -> Measurement -> Measurement
-transform (Lt mA)      (Measurement x mS) = Measurement (mA >. x) (mA >< mS >< trans mA)
+transform (Lt mA)      (Measurement x mS)  = Measurement (mA >. x) (mA >< mS >< trans mA)
 transform nlt@(Nt fs _) (Measurement x mS) = Measurement f (mL >< mS >< trans mL)
-  where (f,mL) = operatingPoint nlt (zip (variablesOf fs) x)
+  where (f,mL) = operatingPoint nlt (zip (variables nlt) x)
