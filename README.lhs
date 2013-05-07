@@ -89,3 +89,29 @@ And  the order of input parameters would be:
     [a1,a2,l1,l2]
 
 
+> degrad a = a/180*pi
+> r5 = print $ transform armT1 $ um [degrad 45, degrad 0, 10, 5, 0, 0] [0, 0, 0, 0, 0, 0]
+
+    x		var
+    10.60660	0.0
+    10.60660	0.0
+    1.0		0.0
+
+
+> r6 =  print $ transform armT1 $ 
+>         um [degrad 45, degrad 0, 10, 5, 0, 0] [degrad 1, degrad 1, 0.01, 0.01, 0, 0]
+
+    x		Cov
+    10.60660	 2.19166  -2.17166 0.0
+    10.60660	-2.17166  2.19166  0.0
+    1.0		 0.0 	  0.0 	  0.0
+
+
+> r7 = print $ transform armT1 $ 
+>         um [degrad 0, degrad 0, 10, 5, 0, 0] [degrad 1, degrad 1, 0.01, 0.01, 0, 0]
+
+    x		var
+    15.0	2.0e-2
+    0.0		4.363323129985823
+    1.0		0.0
+
