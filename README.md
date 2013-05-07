@@ -62,28 +62,40 @@ o3 = 1.0
 We could easily eliminate x and y from the equations as we know the initial coordinates (0,0).
 This can be done in two ways:
 
+
+
+
+
+
 1. Reevaluate our matrix-vector multiplication from above:
+
 ```haskell
 armT2 = nlt (arm1 >. [0,0,1])
 ```
+
 2. Or use our partialEval utility function
+
 ```haskell
 armT2 = nlt (partEval (arm1 >. [x,y,1]) [(x,0), (y,0)])
+```
 
-And order of input parameters.
+And  the order of input parameters would be:
 ```haskell
 print (variables armT1)
 ```
+
 ```
 [a1,a2,l1,l2,x,y]
 ```
+
 ```haskell
 print (variables armT2)
 ```
+```
 [a1,a2,l1,l2]
-
+```
 TODO: this section has errors, reevaluate and fix.
---------------------------------------------------
+--------------------------------------------------77;10102;0c
 
 Now let's evaluate how uncertainties propagate through our model in different operating points
 
