@@ -82,10 +82,10 @@ And  the order of input parameters would be:
 
 > r3 = print (variables armT1)
 
-  [a1,a2,l1,l2,x,y]
+    [a1,a2,l1,l2,x,y]
 
 > r4 = print (variables armT2)
 
-  [a1,a2,l1,l2]
+    [a1,a2,l1,l2]
 
 
