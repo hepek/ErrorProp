@@ -42,7 +42,7 @@ transGen x y =
 
 -- our two link planar arm can now be modeled as superposition of
 -- two rotations and two translations
-arm1 = (rotGen a1) >< (transGen 0 l1) >< (rotGen a2) >< (transGen 0 l2)
+arm1 = (rotGen a1) >< (transGen l1 0) >< (rotGen a2) >< (transGen l2 0)
 
 -- since we are using homogenous coordinates we multiply arm1 with [x, y, 1]
 armT1 = nlt (arm1 >. [x, y, 1])
@@ -74,6 +74,9 @@ degrad a = a/180*pi
 
 print $ transform armT1 $ um [degrad 45, degrad 0, 10, 5, 0, 0] [0, 0, 0, 0, 0, 0]
 ```
+
+TODO: this section has errors, reevaluate and fix.
+
 ```
 x                   var
 -10.606601717798211 0.0
