@@ -71,14 +71,20 @@ This can be done in two ways:
 2. Or use our partialEval utility function
 
 > armT2' = (partial armT1 [(x,0), (y,0)])
+> r2 = print armT2
+
+    o1 = ((l2 * ((cos(a2) * cos(a1)) + (sin(a2) * -sin(a1)))) + (l1 * cos(a1)))
+    o2 = ((l2 * ((cos(a2) * sin(a1)) + (sin(a2) * cos(a1)))) + (l1 * sin(a1)))
+    o3 = 1.0
+
 
 And  the order of input parameters would be:
 
-> r2 = print (variables armT1)
+> r3 = print (variables armT1)
 
   [a1,a2,l1,l2,x,y]
 
-> r3 = print (variables armT2)
+> r4 = print (variables armT2)
 
   [a1,a2,l1,l2]
 
