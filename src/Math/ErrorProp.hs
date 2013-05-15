@@ -110,8 +110,8 @@ partial (Lt _) _ = error "not Nt"
 partial (Nt fs fs') env = Nt (map (partEval env) fs) (map (map (partEval env)) fs')
 
 -- | Calculates Jacobian matrix
-jacobian2 :: [Fn] -> [[Fn]]
-jacobian2 fs = chunksOf n [diff s f | f <- fs, s <- xs']
+jacobian :: [Fn] -> [[Fn]]
+jacobian fs = chunksOf n [diff s f | f <- fs, s <- xs']
   where
     n   = length xs'
     xs' = uniqSym $ concatMap variablesOf fs
