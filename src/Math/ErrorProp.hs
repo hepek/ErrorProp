@@ -22,6 +22,7 @@ import Data.Function
 
 import Math.Symbolic
 import Math.SimpleMx
+import Data.List.Split (chunksOf)
 
 type Fn = Expr Double
 
@@ -109,10 +110,10 @@ partial (Lt _) _ = error "not Nt"
 partial (Nt fs fs') env = Nt (map (partEval env) fs) (map (map (partEval env)) fs')
 
 -- | Calculates Jacobian matrix
-jacobian :: [Fn] -> [[Fn]]
-jacobian fs = transpose [map d fs | d <- ds]
+jacobian2 :: [Fn] -> [[Fn]]
+jacobian2 fs = chunksOf n [diff s f | f <- fs, s <- xs']
   where
-    ds = [ diff s | s <- xs']
+    n   = length xs'
     xs' = uniqSym $ concatMap variablesOf fs
 
 variables :: Transf -> [Fn]
