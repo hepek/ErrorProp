@@ -5,11 +5,12 @@ module Math.ErrorProp
        (Measurement
         , Fn
         , um, cm
-        , lint, nlt
+        , nlt
         , variables, uniqSym
         , defVar
         , x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11
         , transform
+        , linearizationError
         , diag, takeDiag, trans, (>.), (><)
         , partial
         , simplify
@@ -29,8 +30,7 @@ type Mx  = [[Double]]
 type Vec = [Double]
 
 
-data Transf = Lt Mx            -- ^ linear transformations
-            | Nt [Fn] [[Fn]]   -- ^ non linear transformaton
+data Transf = Nt [Fn] [[Fn]]   -- ^ non linear transformaton
 
 -- | Measurementment represented by measured value and corresponding
 --  covariance matrix
@@ -38,7 +38,6 @@ data Measurement = Measurement Vec Mx
               deriving (Eq)
 
 instance (Show Transf) where
-  show (Lt m)    = intercalate "\n" (map show m)
   show (Nt fs _) = intercalate "\n" $ zipWith (\a b -> a ++ " = " ++ b)
                                                (map show ys) 
                                                (map show fs)
@@ -84,12 +83,6 @@ cm x sigmas | any (\y -> length y /= length x) sigmas
                  errorSize x sigmas
             | otherwise = Measurement x sigmas
 
-
--- | Smart constructor for linear transformation
-lint :: [[Double]] -- ^ A matrix representing linear transformation
-   -> Transf
-lint = Lt
-
 -- | predefined symbolic values to be used in defining expression
 xs@[x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11] =
   map (Symbol.('x':).show) [1..11] :: [Fn]
@@ -97,7 +90,7 @@ xs@[x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11] =
 -- | Smart constructor of nonlinear transformation
 --   e.g. nt [x1*x1, x2, sin(x3)]
 nlt :: [Fn]       -- ^ A list of functions, one for each output parameter
-   -> Transf
+   -> Transf 
 nlt fs = Nt fs1 (jacobian fs1)
   where
      fs1 = map simplify fs
@@ -105,7 +98,6 @@ nlt fs = Nt fs1 (jacobian fs1)
 defVar :: String -> Fn
 defVar = var
 
-partial (Lt _) _ = error "not Nt"
 partial (Nt fs fs') env = Nt (map (partEval env) fs) (map (map (partEval env)) fs')
 
 -- | Calculates Jacobian matrix
@@ -116,7 +108,6 @@ jacobian fs = transpose [map d fs | d <- ds]
     xs' = uniqSym $ concatMap variablesOf fs
 
 variables :: Transf -> [Fn]
-variables (Lt _) = []
 variables (Nt fs _) = uniqSym $
     concatMap variablesOf fs
 
@@ -135,6 +126,20 @@ operatingPoint   (Nt fs fs') env =
    map (map (eval env)) fs')
 
 transform :: Transf -> Measurement -> Measurement
-transform (Lt mA)      (Measurement x mS)  = Measurement (mA >. x) (mA >< mS >< trans mA)
 transform nlt@(Nt fs _) (Measurement x mS) = Measurement f (mL >< mS >< trans mL)
   where (f,mL) = operatingPoint nlt (zip (variables nlt) x)
+
+
+--linearizationError :: Transf -> Measurement -> Double
+linearizationError nlt@(Nt fs j) (Measurement x mS) = 
+  f1 `minusA` (f0 `plusA` (mL >. sigmas))
+--maximum $ map abs $
+  where
+    plusA    = zipWith (+)
+    minusA   = zipWith (-)
+    sigmas   = map sqrt $ takeDiag mS
+    vars     = variables nlt
+    x'       = x `plusA` sigmas
+    (f0, mL) = operatingPoint nlt (zip vars x)
+    (f1, _)  = operatingPoint nlt (zip vars x')    
+
