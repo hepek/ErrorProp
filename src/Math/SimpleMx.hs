@@ -53,7 +53,7 @@ instance Applicative Mx where
 instance (Num a) => Num (Mx a) where
     a + b = (+) <$> a <*> b
     a * b = (*) <$> a <*> b
-    a - b = (*) <$> a <*> b
+    a - b = (-) <$> a <*> b
     negate = fmap negate        
     abs    = fmap abs
     signum = fmap signum
