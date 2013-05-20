@@ -44,15 +44,15 @@ instance (Show Transf) where
 
 instance (Show Measurement) where
   show (Measurement x mSigma)
-    | mSigma == mD = showv (toList x) (toList d)
-    | otherwise    = showv (toList x) (toList . takeDiag $ mSigma)
+    | mSigma == mD = showv (toList x) (fmap ((*3) . sqrt) (toList d))
+    | otherwise    = showv (toList x) (fmap ((*3) . sqrt) (toList . takeDiag $ mSigma))
     where
        d  = takeDiag mSigma
        mD = diag d
 
        showv xs sigmas = "measurement [\n" ++
          intercalate ",\n" 
-           [ "  " ++ show x ++ " +- " ++ show (sqrt s)
+           [ "  " ++ show x ++ " +- " ++ show s
                | x <- xs
                | s <- sigmas] ++ "]"
        showm xs sigmas =
@@ -74,8 +74,8 @@ type M = (Double, Double)
 -- | Measurement: constructs uncorrelated sample
 measurement :: [M] -> Measurement
 measurement xs = m (unzip xs)
-  where m (a,b) = Measurement (fromList a) (diag (bb*bb))
-         where bb = (fromList b)
+  where m (a,b) = Measurement (fromList a) (diag bb)
+         where bb = fromList $ fmap ((**2) . (/3)) b
 
 
 -- | Measurement smart constructor: constructs correlated sample

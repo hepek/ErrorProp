@@ -8,6 +8,7 @@ Error propagation library.
 Example 1: Two Link Planar Arm
 ----------------------------
 
+
 Let's simulate a non-linear transformation by combining translations 
 and rotations of a robotic arm and evaluating error propagation at different
 operation points.
