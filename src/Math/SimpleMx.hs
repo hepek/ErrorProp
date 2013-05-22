@@ -2,12 +2,15 @@ module Math.SimpleMx
     ( Vec, Mx
     , fromLists, toLists, fromList, toList
     , takeDiag, diag, trans
+    , mxSize
     , (><), (>.))
     where
 
 import Data.List
 import Data.List.Split
 import Control.Applicative
+
+import Test.QuickCheck hiding ((><))
 
 newtype Vec a = Vec { toList  :: [a] }
               deriving (Eq,Ord)
@@ -80,7 +83,7 @@ mxSize (Mx a) = (length a, b a)
 a@(Mx mA) >< b@(Mx mB) 
     | (snd . mxSize $ a) /= (fst . mxSize $ b)  = error "size mismatch"
     | otherwise = 
-  fromLists $ chunksOf n $ [ muladd a b | a <- mA, b <- mB']
+  trans . fromLists . (chunksOf n) $ [ muladd a b | a <- mA, b <- mB']
   where
     (Mx mB') = trans b
     n        = length mA

@@ -77,7 +77,6 @@ measurement xs = m (unzip xs)
   where m (a,b) = Measurement (fromList a) (diag bb)
          where bb = fromList $ fmap ((**2) . (/3)) b
 
-
 -- | Measurement smart constructor: constructs correlated sample
 measurementCov :: [Double]   -- ^ measurement
                -> [[Double]] -- ^ covariance matrix

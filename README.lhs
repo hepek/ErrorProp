@@ -19,6 +19,7 @@ Figure 1. A two link planar robotic arm
 
 
 > import Math.ErrorProp
+> import Math.SimpleMx
 >
 
 Coordinates
@@ -35,12 +36,12 @@ Model parameters
 
 Couple of helper functions for defining rotations and translations
 
-> rotGen var = 
+> rotGen var = fromLists
 >   [[cos(var), -sin(var), 0]
 >   ,[sin(var),  cos(var), 0]
 >   ,[0,         0,        1]]
 > 
-> transGen x y = 
+> transGen x y = fromLists
 >  [[1, 0, x]
 >  ,[0, 1, y]
 >  ,[0, 0, 1]]
@@ -52,7 +53,7 @@ Our two link planar arm can now be modeled as superposition of two rotations and
 
 To obtain our non-linear transformation we multiply arm1 with [x, y, 1] (homogenous coordinates).
 
-> armT1 = nlt (arm1 >. [x, y, 1])
+> armT1 = transf $ toList (arm1 >. fromList [x, y, 1])
 
 We can view our set of resulting functions:
 
@@ -67,7 +68,7 @@ This can be done in two ways:
 
 1. Reevaluate our matrix-vector multiplication from above:
 
-> armT2 = nlt (arm1 >. [0,0,1])
+> armT2 = transf $ toList (arm1 >. fromList [0,0,1])
 
 2. Or use our partialEval utility function
 
@@ -91,7 +92,13 @@ And  the order of input parameters would be:
 
 
 > degrad a = a/180*pi
-> r5 = print $ transform armT1 $ um [degrad 45, degrad 0, 10, 5, 0, 0] [0, 0, 0, 0, 0, 0]
+> r5 = print $ transform armT1 $ 
+>       measurement [ degrad 45 +- 0
+>                   , degrad 0  +- 0
+>                   , 10 +- 0
+>                   , 5 +- 0
+>                   , 0 +- 0
+>                   , 0 +- 0]
 
     x		var
     10.60660	0.0
@@ -100,7 +107,12 @@ And  the order of input parameters would be:
 
 
 > r6 =  print $ transform armT1 $ 
->         um [degrad 45, degrad 0, 10, 5, 0, 0] [degrad 1, degrad 1, 0.01, 0.01, 0, 0]
+>        measurement [ degrad 45 +- degrad 1
+>                    , degrad 0  +- degrad 1
+>                    , 10 +- 0.01
+>                    , 5  +- 0.01
+>                    , 0  +- 0
+>                    , 0  +- 0] 
 
     x		Cov
     10.60660	 2.19166  -2.17166 0.0
@@ -109,7 +121,12 @@ And  the order of input parameters would be:
 
 
 > r7 = print $ transform armT1 $ 
->         um [degrad 0, degrad 0, 10, 5, 0, 0] [degrad 1, degrad 1, 0.01, 0.01, 0, 0]
+>       measurement [ degrad 0 +- degrad 1
+>                   , degrad 0 +- degrad 1
+>                   , 10 +- 0.01
+>                   , 5  +- 0.01
+>                   , 0  +- 0
+>                   , 0  +- 0]
 
     x		var
     15.0	2.0e-2
