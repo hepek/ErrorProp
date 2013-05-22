@@ -1,17 +1,17 @@
 {-# language ParallelListComp #-}
 -- | Module 'ErrorProp' is used to calculate error propagation in
---   linear and non-linear systems
+--   non-linear systems
 module Math.ErrorProp
        (Measurement
         , Fn, Transf
-        , mkTransf, operatingPoint
+        , mkTransf
         , (+-), measurement, measurementCov
-        , covariance
-        , variables, uniqSym
+        , getCovariance, getValues
+        , variables
         , defVar
         , x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11
-        , transform
-        , linearizationError
+        , apply
+        , linError
         , diag, takeDiag, trans, (>.), (><)
         , partial
         , simplify
@@ -29,7 +29,7 @@ type Fn = Expr Double
 
 data Transf = Nt [Fn] [[Fn]]   -- ^ non linear transformaton
 
--- | Measurementment represented by measured value and corresponding
+-- | Measurementment represented by measured value(s) and corresponding
 --  covariance matrix
 data Measurement = Measurement (Vec Double) (Mx Double)
               deriving (Eq)
@@ -44,8 +44,8 @@ instance (Show Transf) where
 
 instance (Show Measurement) where
   show (Measurement x mSigma)
-    | mSigma == mD = showv (toList x) (fmap ((*3) . sqrt) (toList d))
-    | otherwise    = showv (toList x) (fmap ((*3) . sqrt) (toList . takeDiag $ mSigma))
+    | mSigma == mD = showv (toList x) d
+    | otherwise    = showm (toList x) mSigma
     where
        d  = takeDiag mSigma
        mD = diag d
@@ -54,14 +54,14 @@ instance (Show Measurement) where
          intercalate ",\n" 
            [ "  " ++ show x ++ " +- " ++ show s
                | x <- xs
-               | s <- sigmas] ++ "]"
-       showm xs sigmas =
-         intercalate "\n"
-           [ show x ++ "\t\t" ++ (unwords . intersperse "\t" $
-                  map show line)
-                    | x <- xs
-                      | line <- sigmas]
+               | s <- toList $ fmap ((*3) . sqrt) sigmas] ++ "]"
 
+       showm xs sigmas = "measurement [\n" ++
+         intercalate "\n" 
+           [ "  " ++ show x ++ " +- " ++ show s ++ " -- " ++ (show covC)
+               | x <- xs
+               | covC <- toLists $ sigmas
+               | s <- fmap ((*3) . sqrt) $ toList . takeDiag $ sigmas] ++ "\n]"
 
 errorSize x s = error $  "Input length mismatch. length(x) = " ++ show (length x)
                       ++ ", but length(s) or one of its components isn't"
@@ -71,13 +71,14 @@ type M = (Double, Double)
 (+-) :: Double -> Double -> M
 (+-) = (,)
 
--- | Measurement: constructs uncorrelated sample
+-- | Constructs a measurement from
+--   list of values and 3sigma confidence intervals
 measurement :: [M] -> Measurement
 measurement xs = m (unzip xs)
   where m (a,b) = Measurement (fromList a) (diag bb)
          where bb = fromList $ fmap ((**2) . (/3)) b
 
--- | Measurement smart constructor: constructs correlated sample
+-- | Constructs a measurement from list of values and their covariance matrix
 measurementCov :: [Double]   -- ^ measurement
                -> [[Double]] -- ^ covariance matrix
                -> Measurement
@@ -86,8 +87,13 @@ measurementCov x sigmas | any (\y -> length y /= length x) sigmas
                               errorSize x sigmas
                         | otherwise = Measurement (fromList x) (fromLists sigmas)
 
-covariance :: Measurement -> Mx Double
-covariance (Measurement _ cov) = cov
+-- | extracts covariance matrix from a measurement
+getCovariance :: Measurement -> Mx Double
+getCovariance (Measurement _ cov) = cov
+
+-- | extracts values from a measurement
+getValues :: Measurement -> Vec Double
+getValues (Measurement val _)  = val
 
 -- | predefined symbolic values to be used in defining expression
 xs@[x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11] =
@@ -125,20 +131,21 @@ uniqSym fs =
     getSym (Symbol a) = a
     getSym _  = error "not a symbol"
 
--- | evaluate non-linear transformation at operation point
+-- | Evaluates non-linear transformation at operation point
 operatingPoint :: Transf -> [(Fn, Double)] -> (Vec Double, Mx Double)
 operatingPoint   (Nt fs fs') env =
   (fromList  $ map (eval env) fs,
    fromLists $ map (map (eval env)) fs')
 
-
-transform :: Transf -> Measurement -> Measurement
-transform nlt@(Nt fs _) (Measurement x mS) = Measurement f (mL >< mS >< trans mL)
+-- | Applies non-linear transformation to sample
+apply :: Transf -> Measurement -> Measurement
+apply nlt@(Nt fs _) (Measurement x mS) = Measurement f (mL >< mS >< trans mL)
   where (f,mL) = operatingPoint nlt (zip (variables nlt) $ toList x)
 
 
---linearizationError :: Transf -> Measurement -> Double
-linearizationError nlt@(Nt fs j) (Measurement x mS) = 
+-- | Calculates calculation error from linearization of transformation
+linError :: Transf -> Measurement -> Vec Double
+linError nlt@(Nt fs j) (Measurement x mS) = 
   f1 - (f0 + (mL >. sigmas))
   where
     sigmas   = fmap sqrt $ takeDiag mS

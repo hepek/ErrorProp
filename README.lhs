@@ -92,7 +92,7 @@ And  the order of input parameters would be:
 
 
 > degrad a = a/180*pi
-> r5 = print $ transform armT2 $ 
+> r5 = print $ apply armT2 $ 
 >       measurement [ degrad 45 +- 0
 >                   , degrad 0  +- 0
 >                   , 10 +- 0
@@ -103,7 +103,7 @@ And  the order of input parameters would be:
       10.606601717798211 +- 0.0,
       1.0 +- 0.0]
 
-> r6 =  transform armT1 $ 
+> r6 =  apply armT1 $ 
 >        measurement [ degrad 45 +- degrad 1
 >                    , degrad 0  +- degrad 1
 >                    , 10 +- 0.01
@@ -116,14 +116,14 @@ And  the order of input parameters would be:
       10.606601717798211 +- 0.1953898090314297,
       1.0 +- 0.0]
 
-> r6' = covariance r6
+> r6' = getCovariance r6
 
     [4.241908608148729e-3,-4.219686385926508e-3,0.0]
     [-4.219686385926507e-3,4.24190860814873e-3,0.0]
     [0.0,0.0,0.0]
 
 
-> r7 = print $ transform armT1 $ 
+> r7 = print $ apply armT1 $ 
 >       measurement [ degrad 0 +- degrad 1
 >                   , degrad 0 +- degrad 1
 >                   , 10 +- 0.01
