@@ -53,7 +53,7 @@ Our two link planar arm can now be modeled as superposition of two rotations and
 
 To obtain our non-linear transformation we multiply arm1 with [x, y, 1] (homogenous coordinates).
 
-> armT1 = transf $ toList (arm1 >. fromList [x, y, 1])
+> armT1 = mkTransf $ toList (arm1 >. fromList [x, y, 1])
 
 We can view our set of resulting functions:
 
@@ -68,7 +68,7 @@ This can be done in two ways:
 
 1. Reevaluate our matrix-vector multiplication from above:
 
-> armT2 = transf $ toList (arm1 >. fromList [0,0,1])
+> armT2 = mkTransf $ toList (arm1 >. fromList [0,0,1])
 
 2. Or use our partialEval utility function
 
@@ -92,21 +92,18 @@ And  the order of input parameters would be:
 
 
 > degrad a = a/180*pi
-> r5 = print $ transform armT1 $ 
+> r5 = print $ transform armT2 $ 
 >       measurement [ degrad 45 +- 0
 >                   , degrad 0  +- 0
 >                   , 10 +- 0
->                   , 5 +- 0
->                   , 0 +- 0
->                   , 0 +- 0]
+>                   , 5 +- 0]
 
-    x		var
-    10.60660	0.0
-    10.60660	0.0
-    1.0		0.0
+  measurement [
+    10.606601717798213 +- 0.0,
+    10.606601717798211 +- 0.0,
+    1.0 +- 0.0]
 
-
-> r6 =  print $ transform armT1 $ 
+> r6 =  transform armT1 $ 
 >        measurement [ degrad 45 +- degrad 1
 >                    , degrad 0  +- degrad 1
 >                    , 10 +- 0.01
@@ -114,10 +111,16 @@ And  the order of input parameters would be:
 >                    , 0  +- 0
 >                    , 0  +- 0] 
 
-    x		Cov
-    10.60660	 2.19166  -2.17166 0.0
-    10.60660	-2.17166  2.19166  0.0
-    1.0		 0.0 	  0.0 	  0.0
+  measurement [
+    10.606601717798213 +- 0.1953898090314297,
+    10.606601717798211 +- 0.1953898090314297,
+    1.0 +- 0.0]
+
+> r6' = covariance r6
+
+  [4.241908608148729e-3,-4.219686385926508e-3,0.0]
+  [-4.219686385926507e-3,4.24190860814873e-3,0.0]
+  [0.0,0.0,0.0]
 
 
 > r7 = print $ transform armT1 $ 
@@ -128,8 +131,8 @@ And  the order of input parameters would be:
 >                   , 0  +- 0
 >                   , 0  +- 0]
 
-    x		var
-    15.0	2.0e-2
-    0.0		4.363323129985823
-    1.0		0.0
+  measurement [
+    15.0 +- 1.4142135623730952e-2,
+    0.0 +- 0.27596078516100275,
+    1.0 +- 0.0]
 

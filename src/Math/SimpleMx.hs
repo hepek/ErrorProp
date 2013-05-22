@@ -78,15 +78,19 @@ mxSize (Mx a) = (length a, b a)
         | otherwise = head s
      where s = fmap (length . toList) a
 
+sizeError a b = error $ "size mismatch: " ++ (show $mxSize a) ++( show $mxSize b)
+
+infixl 4 ><
+
 -- -- | Matrix multiplication
 (><) :: (Num a) => Mx a -> Mx a -> Mx a
 a@(Mx mA) >< b@(Mx mB) 
-    | (snd . mxSize $ a) /= (fst . mxSize $ b)  = error "size mismatch"
+    | (snd . mxSize $ a) /= (fst . mxSize $ b)  = sizeError a b
     | otherwise = 
-  trans . fromLists . (chunksOf n) $ [ muladd a b | a <- mA, b <- mB']
+  trans .  fromLists . (chunksOf m) $ [ muladd a b |  b <- mB', a <- mA]
   where
     (Mx mB') = trans b
-    n        = length mA
+    (m,n)    = mxSize a
 
 takeDiag :: Mx a -> Vec a
 takeDiag m = fromList $ [ m' !! (i-1) !! (i-1) | i <- [1 .. length m']]
@@ -100,3 +104,8 @@ diag (Vec d) = fromLists $ chunksOf n $ intercalate zeros $ transpose [d]
 
 trans :: Mx a -> Mx a
 trans  = fromLists . transpose . toLists
+
+mxA = fromLists [[1,2,3],[4,5,6]]
+mxB = fromLists [[1,2],[3,4]]
+
+--prop_diag v = takeDiag (diag v) == v

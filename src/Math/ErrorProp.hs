@@ -3,8 +3,8 @@
 --   linear and non-linear systems
 module Math.ErrorProp
        (Measurement
-        , Fn
-        , transf
+        , Fn, Transf
+        , mkTransf, operatingPoint
         , (+-), measurement, measurementCov
         , covariance
         , variables, uniqSym
@@ -95,9 +95,9 @@ xs@[x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11] =
 
 -- | Smart constructor of nonlinear transformation
 --   e.g. nt [x1*x1, x2, sin(x3)]
-transf :: [Fn]       -- ^ A list of functions, one for each output parameter
+mkTransf :: [Fn]       -- ^ A list of functions, one for each output parameter
    -> Transf 
-transf fs = Nt fs1 (jacobian fs1)
+mkTransf fs = Nt fs1 (jacobian fs1)
   where
      fs1 = map simplify fs
 
@@ -130,6 +130,7 @@ operatingPoint :: Transf -> [(Fn, Double)] -> (Vec Double, Mx Double)
 operatingPoint   (Nt fs fs') env =
   (fromList  $ map (eval env) fs,
    fromLists $ map (map (eval env)) fs')
+
 
 transform :: Transf -> Measurement -> Measurement
 transform nlt@(Nt fs _) (Measurement x mS) = Measurement f (mL >< mS >< trans mL)
