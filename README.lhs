@@ -5,6 +5,13 @@ TODO: writeme
 
 Error propagation library.
 
+Installation
+
+    $ git clone git://github.com/hepek/ErrorProp.git
+    $ cd ErrorProp
+    $ cabal install
+
+
 Example 1: Two Link Planar Arm
 ----------------------------
 

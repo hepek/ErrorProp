@@ -10,7 +10,6 @@ import Data.List
 import Data.List.Split
 import Control.Applicative
 
-import Test.QuickCheck hiding ((><))
 
 newtype Vec a = Vec { toList  :: [a] }
               deriving (Eq,Ord)
