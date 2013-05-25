@@ -25,7 +25,7 @@ Figure 1. A two link planar robotic arm
 Coordinates
 
 > x = defVar "x"
-> y = defVar"y"
+> y = defVar "y"
 
 Model parameters
 
