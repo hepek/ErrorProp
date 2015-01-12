@@ -26,7 +26,7 @@ data Expr a = Atom a
 
 instance (Num a) => Num (Expr a) where
   (+) = Sum
-  (-) = flip Sum . Neg
+  a - b = Sum a (Neg b)
   (*) = Prod
   negate = Neg
   signum = undefined
