@@ -113,7 +113,7 @@ d x (Symbol y) | x == y    = 1
                | otherwise = 0
 
 
-simplify a = f a
+simplify_obsolete a = f a
   where
     b = s a
     f a | b == a = a
@@ -141,6 +141,9 @@ partEval env (Sin a)    = s $ sin (partEval env a)
 partEval env (Cos a)    = s $ cos (partEval env a)
 partEval env (Log a)    = s $ log (partEval env a)
 
+-- | Simplifies expressions
+simplify = partEval []
+
 variablesOf :: (Expr a) -> [Expr a]
 variablesOf expr =
     nubBy  ((==) `on` getSym) $
@@ -163,7 +166,7 @@ variablesOf expr =
 
 -- | Evaluates an expression with an environment defined by mapping from
 --   Symbol -> value
-eval env expr  = extract $ simplify $ partEval env expr
+eval env expr  = extract $ partEval env expr
   where
     extract (Atom a) = a
     extract other = error $ "unbound variables in final expr: "  ++ show other
